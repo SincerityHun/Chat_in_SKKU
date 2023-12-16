@@ -1,0 +1,197 @@
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+body {
+    margin: 10px;
+    width: 432px;
+    height: 620px;
+    display: flex;
+    border: solid 8px black;
+    align-items: center;
+    border-radius: 5px;
+    overflow:hidden;
+    position: relative;
+        /* Needed for absolute positioning of children */
+}
+
+.sidebar{
+    width:16%;
+    height: 100%;
+    display:flex;
+    flex-direction: column;
+
+    background: linear-gradient(to right, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.3) 100%);
+    background-position: right;
+    background-size: 2px 97%;
+    background-repeat: no-repeat;
+}
+.sidebar_button, i{
+    width:36px;
+    height:36px;
+    color: black;
+    margin:10px;
+}
+
+/* The Modal (background) */
+.sidebar_modal {
+    display: none;
+    /* Hidden by default */
+    position: absolute;
+    /* Stay in place */
+    z-index: 1;
+    /* Sit on top */
+    top: 0;
+    left: 0;
+    width: 100%;
+    /* Full width */
+    height: 100%;
+    /* Full height */
+    overflow: auto;
+    /* Enable scroll if needed */
+    background-color: rgba(0, 0, 0, 0.4);
+    /* Black w/ opacity */
+    justify-content: center;
+    align-items: center;
+}
+
+/* Modal Content */
+.sidebar_modal_modal-content {
+    margin: 10px;
+    /* Margin auto for flexbox centering */
+    padding: 10px;
+    border: 1px solid #888;
+    border-radius: 5px;
+    background-color: #fefefe;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    /* Limit the size of the modal content if necessary */
+    width: 90%;
+    height:20%;
+    /* or any size you prefer */
+    max-width: 400px;
+    /* optional: ensures the content box doesn't get too large */
+    /* Height can be auto or a fixed size depending on content */
+}
+
+/* The Close Button */
+.sidebar_modal_modal-content_close {
+    color: #aaa;
+    position: absolute;
+    /* Absolute position within the modal content */
+    top:243px;
+    /* Position from top */
+    right: 30px;
+    /* Position from right */
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+    /* Change cursor on hover */
+}
+
+.sidebar_modal_modal-content_close:hover,
+.sidebar_modal_modal-content_close:focus {
+    color: black;
+    text-decoration: none;
+    cursor: pointer;
+}
+.sidebar_modal_modal-content_friend-name{
+    width: 290px;
+    height: 32px;
+    font-size:large;
+    padding:5px;
+    margin-top:24px;
+    border-radius: 10px;
+}
+.sidebar_modal_modal-content_submit
+{
+    height: 32px;
+    font-size: large;
+    padding: 5px;
+    margin-top: 24px;
+    border-radius: 10px;
+}
+
+.main{
+    width:84%;
+    height: 100%;
+}
+.main_header {
+    width:100%;
+    height: 8%;
+    display: flex;
+    justify-content: start;
+    align-items: center;
+    font-weight: bolder;
+    font-size: x-large;
+    margin-left:10px;
+    margin-top: 0px;
+    box-shadow: 0px 8px 6px -6px rgba(0, 0, 0, 0.1);
+    padding-left:3px;
+    /* Horizontal offset, vertical offset, blur radius, spread radius, color */
+}
+.profile-user {
+    width: 90%;
+    height: 36px;
+    margin: 10px;
+    position:relative;
+    overflow: hidden;
+    display:flex;
+    align-items: center;
+}
+
+.profile-user_user-image {
+    width:32px;
+    height: 32px;
+}
+
+.profile-user_user-name {
+    width:80%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-weight: bold;
+}
+.main_my-profile{
+    width: 100%;
+    height:16%;
+    display:flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0px 8px 6px -6px rgba(0, 0, 0, 0.1);
+    /* Horizontal offset, vertical offset, blur radius, spread radius, color */
+}
+
+
+.main_friend-profile{
+    width: 100%;
+    height: 80%;
+    display: flex;
+    flex-direction: column;
+    justify-content: start;
+    align-items: start;
+    overflow-y:auto;
+}
+.main_friend-profile .profile-user{
+    height:72px;
+    flex-shrink: 0;
+    box-shadow: -2px 0px 0px 0px rgba(0, 0, 0, 0.1);
+    padding:8px;
+}
+.main_friend-profile .profile-user_user-image {
+    width: 32px;
+    height: 32px;
+    
+}
+
+.main_friend-profile .profile-user_user-name {
+    width: 80%;
+    height: 100%;
+    margin-left:15px;
+    display: flex;
+    justify-content: start;
+    align-items: center;
+    font-weight: lighter;
+}

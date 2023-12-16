@@ -1,0 +1,64 @@
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+body{
+    margin:10px;
+    width:432px;
+    height:620px;
+    display:flex;
+    justify-content: center;
+    align-items: center;
+    border: solid 8px black;
+    border-radius: 5px;
+}
+.box{
+    width:80%;
+    height:40%;
+    border:solid 4px black ;
+    padding:8px;
+
+    display:flex;
+    flex-direction: column;
+    align-items: center;
+}
+.box_img{
+    margin:10%;
+    width:80%;
+}
+.box_form{
+    width:80%;
+    height:80%;
+    display:flex;
+    flex-direction: column;
+    align-items: center;
+}
+.box_form_userId{
+    width:80%;
+    height: 20%;
+    text-align: center;
+    margin-bottom: 10px;
+}
+.box_form_password{
+    width:80%;
+    height: 20%;
+    text-align: center;
+
+}
+.box_form_button{
+    width:80%;
+    height: 60%;
+    display: flex;
+    justify-content: space-evenly;
+    align-items: center;
+}
+.box_form_button_login{
+    width:40%;
+    cursor: pointer;
+}
+.box_form_button_register{
+    width:40%;
+    cursor: pointer;
+}
+

@@ -1,0 +1,146 @@
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+body{
+    margin: 10px;
+    width: 432px;
+    height: 620px;
+    display: flex;
+    flex-direction: column;
+    border: solid 8px black;
+    border-radius: 5px;
+    overflow: hidden;
+    position: relative;
+    /* Needed for absolute positioning of children */
+}
+
+.header {
+    height: 12%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding:0px 12px;
+    
+}
+.header_image{
+    width: 32px;
+    height: 32px;
+    cursor: pointer;
+}
+.header_close{
+    width: 32px;
+    height: 32px;
+    cursor: pointer;
+}
+.header_chatId{
+    display:flex;
+    justify-content: center;
+    align-items: center;
+    font-weight: 900;
+    font-size:x-large
+}
+.chat-area {
+    width: 100%;
+    height: 74%;
+    background-color: #BACEE0;
+    overflow: auto;
+    padding: 0px 5px;
+    border-top:solid 1px black;
+    border-bottom: solid 1px black;
+}
+.chat {
+    width: 100%;
+    height: fit-content;
+    display: flex;
+    position: relative;
+    justify-content: end;
+    align-items: start;
+    padding: 0px 0px 5px 0px;
+    margin: 15px 0px 0px 0px;
+}
+.id {
+    width: 100%;
+    height: 10px;
+    margin: 10px 0px 0px 0px;
+    font-size: 10px;
+    font-weight: bold;
+    padding: 0px 5px;}
+.time {
+    width: fit-content;
+    height: fit-content;
+    font-size: 10px;
+    align-self: end;
+}
+.chat-text {
+    width: fit-content;
+    max-width: 200px;
+    /* height:15px; */
+    background-color: #FBE209;
+    padding: 5px 10px;
+    border-radius: 3px;
+    font-size: 15px;
+    margin: 0px 5px;
+    word-wrap: break-word;
+    /* 단어 내에서도 줄바꿈 허용 */
+    white-space: normal;
+    /* 공백 문자가 있는 곳에서 줄바꿈 허용 */
+    height: auto;
+    /* 내용에 따라 높이 자동 조정 */
+}
+.chat-text.receiver {
+    background-color: white;
+    order: -1;
+}
+
+.chat.receiver {
+    justify-content: start;
+    margin: 5px 0px 0px 0px;
+}
+.typing-area {
+    width: 100%;
+    height: 24%;
+    position: relative;
+}
+.typing-user {
+    width: calc(100% - 2px);
+    height: 72%;
+    border: none;
+    resize: none;
+}
+.typing-area_content{
+    width:100%;
+    height: 20%;
+    display:flex;
+    justify-content: space-between;
+    align-items: center;
+    padding:0px 5px;
+
+}
+.media{
+    width: 16%;
+    height:24px;
+    display: flex;
+    justify-content: space-evenly;
+}
+.content_image{
+    height: 24px;
+    cursor: pointer;
+}
+.content_video{
+    height: 24px;
+    cursor:pointer;
+}
+#user-send {
+    margin: 5px;
+    background-color: #FBE209;
+    width: 20%;
+    height: 24px;
+    font-size: 15px;
+    border: none;
+    border-radius: 3px;
+    text-align: center;
+    padding:3px;
+    cursor: pointer;
+}
