@@ -9,16 +9,17 @@
 <body>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     <script src="../static/chat-list_function.js" type="text/javascript"></script>
-    
+    <div id="hiddenChats" data-chatrooms="{{ chatrooms }}" style="display: none;">{{ chatrooms }}</div>
+    <div id="hiddenUserId" data-user-id="{{ userId }}" style="display: none;">{{ userId }}</div>
     <div class="sidebar">
-        <a href="friend.html" class="sidebar_button">
+        <a href="#" class="sidebar_button"id="friend-list">
             <!-- Insert friend logo here (use an img tag or icon library) -->
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6">
                 <path
                     d="M4.5 6.375a4.125 4.125 0 118.25 0 4.125 4.125 0 01-8.25 0zM14.25 8.625a3.375 3.375 0 116.75 0 3.375 3.375 0 01-6.75 0zM1.5 19.125a7.125 7.125 0 0114.25 0v.003l-.001.119a.75.75 0 01-.363.63 13.067 13.067 0 01-6.761 1.873c-2.472 0-4.786-.684-6.76-1.873a.75.75 0 01-.364-.63l-.001-.122zM17.25 19.128l-.001.144a2.25 2.25 0 01-.233.96 10.088 10.088 0 005.06-1.01.75.75 0 00.42-.643 4.875 4.875 0 00-6.957-4.611 8.586 8.586 0 011.71 5.157v.003z" />
             </svg>
         </a>
-        <a href="chat-list.html" class="sidebar_button">
+        <a href="#" class="sidebar_button"id="chat-list">
             <!-- Insert chatting logo here -->
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6">
                 <path
@@ -41,9 +42,8 @@
                 <h2>Make Chat Room</h2>
                 <div class="friend-list">
                     <!-- Dynamically loaded friend list will go here -->
-                    <div class="friend-item">임성훈</div>
-                    <div class="friend-item selected">조현수</div>
                 </div>
+                <input type="text" id="roomName" placeholder="Type Room Name">
                 <button id="createGroupChat">Create Group Chat</button>
             </div>
         </div>
@@ -51,19 +51,6 @@
     <div class="main">
         <div class="main_header">Chats</div>
         <div class="main_chat-rooms">
-            <div class="main_chat-rooms_item">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="main_chat-rooms_item-image">
-                    <path fill-rule="evenodd"
-                        d="M12 2.25c-2.429 0-4.817.178-7.152.521C2.87 3.061 1.5 4.795 1.5 6.741v6.018c0 1.946 1.37 3.68 3.348 3.97.877.129 1.761.234 2.652.316V21a.75.75 0 001.28.53l4.184-4.183a.39.39 0 01.266-.112c2.006-.05 3.982-.22 5.922-.506 1.978-.29 3.348-2.023 3.348-3.97V6.741c0-1.947-1.37-3.68-3.348-3.97A49.145 49.145 0 0012 2.25zM8.25 8.625a1.125 1.125 0 100 2.25 1.125 1.125 0 000-2.25zm2.625 1.125a1.125 1.125 0 112.25 0 1.125 1.125 0 01-2.25 0zm4.875-1.125a1.125 1.125 0 100 2.25 1.125 1.125 0 000-2.25z"
-                        clip-rule="evenodd" />
-                </svg>
-
-                <div class="content">
-                    <div class="main_chat-rooms_name">정성훈</div>
-                    <p class="main_chat-rooms_message">정성훈 다했냐?</p>
-                </div>
-            </div>
-            
         </div>
     </div>
     

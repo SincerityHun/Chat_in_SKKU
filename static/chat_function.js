@@ -1,24 +1,60 @@
 "use strict";
 // 유저가 보낸 메세지
-function make_send(object,text,time) {
-    let finalTime = make_time(time);
+// Function to open the modal
+function openModal(src) {
+    document.getElementById('modalImage').src = src;
+    document.getElementById('imageModal').style.display = "block";
+}
+function make_send(object, messageData) {
+    let finalTime = make_time(messageData.time);
+    let content;
+
+    switch (messageData.messageType) {
+        case "text":
+            content = `<div class="chat-text">${messageData.text}</div>`;
+            break;
+        case "image":
+            content = `<img class="chat-text chat-media" src="${messageData.image}" alt="Image" onclick="openModal(this.src)">`;
+            break;
+        case "video":
+            content = `<video class="chat-text chat-media" controls src="${messageData.video}""></video>`;
+            break;
+        default:
+            content = `<div class="chat-text">Unsupported message type</div>`;
+    }
+
     let data = `
-    <div class="chat">
+        <div class="chat">
             <div class="time">${finalTime}</div>
-            <div class="chat-text">${text}</div>
-    </div>`;
+            ${content}
+        </div>`;
     object.append(data);
 };
-
 // 유저가 받은 메세지
-function make_receive(object,userId,text,time) {
-    let finalTime = make_time(time);
+function make_receive(object,messageData) {
+    let finalTime = make_time(messageData.time);
+    let content;
+
+    switch (messageData.messageType) {
+        case "text":
+            content = `<div class="chat-text receiver">${messageData.text}</div>`;
+            break;
+        case "image":
+            content = `<img class="chat-text chat-media receiver" src="${messageData.image}" alt="Image" onclick="openModal(this.src)">`;
+            break;
+        case "video":
+            content = `<video class="chat-text chat-media receiver" controls src="${messageData.video}" "></video>`;
+            break;
+        default:
+            content = `<div class="chat-text receiver">Unsupported message type</div>`;
+    }
+
     let data = `
-    <div class="id">${userId}</div>
-    <div class="chat receiver">
-        <div class="time">${finalTime}</div>
-        <div class="chat-text receiver">${text}</div>
-    </div>`;
+        <div class="id">${messageData.userId}</div>
+        <div class="chat receiver">
+            <div class="time">${finalTime}</div>
+            ${content}
+        </div>`;
     object.append(data);
 };
 
@@ -35,37 +71,72 @@ function make_time(time) {
     let finalTime = `${ampm} ${hours}:${minutes}`;
     return finalTime;
 };
-function displayChatHistory(chatHistory) {
+function displayChatHistory(chatHistory,userId) {
     let chatArea = $('.chat-area');
+    console.log(chatHistory);
     chatHistory.forEach(chat => {
-        if (chat.userId === $(".typing-login").val()) {
-            make_send(chatArea, chat.text, chat.time);
-        } else {
-            make_receive(chatArea, chat.userId, chat.text, chat.time);
+        switch (chat.messageType) {
+            case "text":
+                if (chat.userId === userId) {
+                    make_send(chatArea, chat);
+                } else {
+                    make_receive(chatArea, chat);
+                }
+                break;
+            case "image":
+                // Assuming make_send_image and make_receive_image are similar to make_send and make_receive but for images
+                if (chat.userId === userId) {
+                    make_send(chatArea, chat);
+                } else {
+                    make_receive(chatArea, chat);
+                }
+                break;
+            case "video":
+                // Similarly, for video messages
+                if (chat.userId === userId) {
+                    make_send(chatArea, chat);
+                } else {
+                    make_receive(chatArea,chat);
+                }
+                break;
         }
     });
     $('.chat-area').scrollTop($('.chat-area')[0].scrollHeight);
 }
+
 $(document).ready(function () {
     var ws;
-     function setupWebSocket() {
+    var userId = $('#hiddenUserId').data('user-id'); 
+    var roomName = $('.header_chatId').data('room-name');
+    var roomId = $('#hiddenRoomId').data('room-id'); 
+    var chats = $('#hiddenChatResult').data('chats'); 
+    console.log(userId, roomName, roomId)
+    //0. 기존 채팅 로그 다운로드
+    displayChatHistory(chats, userId);
+    //1. 실시간 채팅용 웹소켓 연결
+    function setupWebSocket() {
         ws = new WebSocket("ws://localhost:8000/ws");
-
-        ws.onmessage = function(event) {
-            console.log("WEB SOCKET");
-            let data = JSON.parse(event.data); 
-            let chatArea = $('.chat-area');
-            let current_userId = $(".typing-login").val();
-            if (data.userId == current_userId) {
-                make_send(chatArea, data.text, data.time);
-            }
-            else {
-                make_receive(chatArea, data.userId, data.text, data.time);
-            }
-            $('.chat-area').scrollTop($('.chat-area')[0].scrollHeight);
+        ws.onopen = function() {
+            console.log("WebSocket connection established");
         };
-    }
+        ws.onmessage = function(event) {
+            let data = JSON.parse(event.data);
+            let chatArea = $('.chat-area');
+            console.log(data);
+            if (data.userId == userId && data.roomId == roomId) {
+                make_send(chatArea, data);
+            } else {
+                make_receive(chatArea,data);
+            }
 
+            $('.chat-area').scrollTop($('.chat-area')[0].scrollHeight);
+            };
+            ws.onerror = function(error) {
+                console.error("WebSocket error:", error);
+            };
+    }
+    setupWebSocket(userId, roomId);
+    //2. 실시간 채팅용 채팅 보내기
     $(".typing-user").on('keydown', function (e) {
         // Enter가 눌리고 Shift가 동시에 눌리지 않은 경우를 감지합니다.
         if (e.key === "Enter" && !e.shiftKey) {
@@ -109,36 +180,13 @@ $(document).ready(function () {
         // Convert newlines to <br> tags if there's a message followed by Enter
         text = text.replace(/\n/g, "<br>");
         text = text.replace(/\s/g, '\u00A0');
-        // Data send
-        let userId = $(".typing-login").val();
-        let messageData = { userId: userId, text: text };
+            
+        // 벡엔드로 데이터 전송
+        let messageData = { userId: userId, roomId:roomId,text: text };
         ws.send(JSON.stringify(messageData));
         $(this).val("");
         }
     });
-    // #user-enter button click event
-    $("#user-enter").click(function (e) {
-        e.preventDefault();
-        let userId = $(".typing-login").val();
-        console.log(userId);
-        $.ajax({
-            url: '/login',
-            type: 'POST',
-            contentType: 'application/json',
-            data: JSON.stringify({ userId: userId}),
-            success: function(response) {
-                // Handle response here
-                console.log('Login response:', response);
-                setupWebSocket();
-                displayChatHistory(response);
-            },
-            error: function(error) {
-                // Handle error here
-                console.error('Login error:', error.JSON);
-            }
-        });
-    });
-    // #user-send click event
     $("#user-send").click(function (e) {
         e.preventDefault();
         console.log("User send button clicked"); // 버튼 클릭 확인
@@ -151,12 +199,75 @@ $(document).ready(function () {
             textarea.val("");
             return;
         }
+
         //Backend로 데이터 전송
-        let userId = $(".typing-login").val();
-        let messageData = { userId: userId, text: text };
+        let messageData = { userId: userId, roomId:roomId,text: text };
         console.log("Sending message:", messageData); // 전송할 메시지 데이터 확인
         ws.send(JSON.stringify(messageData));
         textarea.val("");
         
     });
+
+    //3. x누르면 나가게
+    $(".header_close").click(function (e) {
+        e.preventDefault();
+        console.log("clicked");
+        window.location.href = "/chat-list?userId=" + userId;
+    });
+
+    //4. 이미지 보내기
+    // Function to upload a file
+    async function uploadFile(file, url) {
+        const formData = new FormData();
+        formData.append("file", file);
+
+        const response = await fetch(url, {
+            method: "POST",
+            body: formData
+        });
+        return response.json();
+    }
+
+    // Function to send a chat message with the file URL
+    function sendChatMessage(url, type) {
+        const messageData = {
+            userId: userId,
+            roomId: roomId,
+            messageType:"type",
+            [type]: url
+        };
+        ws.send(JSON.stringify(messageData));
+    }
+    // Event listeners for file inputs
+    document.getElementById('imageInput').addEventListener('change', async function() {
+        if (this.files.length > 0) {
+            const file = this.files[0];
+            const response = await uploadFile(file, '/upload_image');
+            if (response.url) {
+                sendChatMessage(response.url, 'image');
+            }
+        }
+    });
+
+    document.getElementById('videoInput').addEventListener('change', async function() {
+        if (this.files.length > 0) {
+            const file = this.files[0];
+            const response = await uploadFile(file, '/upload_video');
+            if (response.url) {
+                sendChatMessage(response.url, 'video');
+            }
+        }
+    });
+
+    $(".content_image").click(function (e) {
+        e.preventDefault();
+        $("#imageInput").click(); // Trigger file input
+    })
+    $(".content_video").click(function (e) {
+        e.preventDefault();
+        $("#videoInput").click(); // Trigger file input
+    })
+    $(".close").click(function() {
+        document.getElementById('imageModal').style.display = "none";
+    })
 });

@@ -1,57 +1,234 @@
+from sqlalchemy import func
 from sqlalchemy.orm import Session
-from models import ChatUser, ChatData
-from schema import ChatRequestCreate, ChatRequest
+from models import (
+    ChatUser,
+    ChatData,
+    ChatRoom,
+    friendship_association,
+    chatroom_association,
+)
+from schema import UserCreate, UserLogin, ChatRequest
 import pytz
 from datetime import datetime
+from fastapi import HTTPException, status
+import json
+from typing import Optional, List
 
 
-def get_chatlist(db: Session):
-    chat_data = db.query(ChatData).all()
-    return [chat_record_to_dict(chat) for chat in chat_data]
+# Function to register a new user
+def create_user(db: Session, user: UserCreate):
+    # 유저 있는지 탐색
+    db_user = db.query(ChatUser).filter(ChatUser.userId == user.userId).first()
+    if db_user:
+        raise HTTPException(status_code=400, detail="User already registered")
+    # 유저가 없으면 유저 추가
+    new_user = ChatUser(userId=user.userId, userPassword=user.userPassword)
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+    return new_user
 
 
-def chat_record_to_dict(chat_record):
+# Function to verify user login
+def verify_user(db: Session, user: UserLogin):
+    # 유저 비번 확인
+    db_user = (
+        db.query(ChatUser)
+        .filter(
+            ChatUser.userId == user.userId, ChatUser.userPassword == user.userPassword
+        )
+        .first()
+    )
+    # 유저 비번 아니면 Exception
+    if not db_user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid username or password",
+        )
+    # 맞으면 해당 유저 반환
+    return db_user
+
+
+# Function to get a user's friend list
+def get_friends_list(db: Session, user_id: str):
+    user = db.query(ChatUser).filter(ChatUser.userId == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    friends_list = [friend.userId for friend in user.friends]
+    return friends_list
+
+
+def get_rooms_list(db: Session, user_id: str):
+    # Retrieve user's chat rooms
+    user = db.query(ChatUser).filter(ChatUser.userId == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    chat_rooms = user.rooms
+    chat_list = []
+
+    for room in chat_rooms:
+        # Find the most recent message in each room
+        latest_message = (
+            db.query(ChatData)
+            .filter(ChatData.roomId == room.roomId)
+            .order_by(ChatData.time.desc())
+            .first()
+        )
+
+        # Format the room data
+        room_data = {
+            "roomId": room.roomId,
+            "roomName": get_roomName(db, room.roomId, user_id),
+            "latestMessage": latest_message.text if latest_message.text else "Media Data",
+        }
+        chat_list.append(room_data)
+    return chat_list
+
+
+# Function to add a friend
+def add_friend(db: Session, sender_userId: str, receiver_userId: str):
+    sender = db.query(ChatUser).filter(ChatUser.userId == sender_userId).first()
+    receiver = db.query(ChatUser).filter(ChatUser.userId == receiver_userId).first()
+    if not sender or not receiver:
+        raise HTTPException(status_code=404, detail="User not found")
+    if receiver in sender.friends:
+        raise HTTPException(status_code=403, detail="User already friend")
+    # Add each other as friends
+    sender.friends.append(receiver)
+    receiver.friends.append(sender)
+    db.commit()
+    return 1  # Friendship established
+
+
+def user_to_dict(user: ChatUser):
     return {
-        "index": chat_record.index,
-        "userId": chat_record.userId,
-        "time": chat_record.time,
-        "text": chat_record.text,
+        "userId": user.userId,
+        # Add other necessary fields here
     }
 
 
-def login(db: Session, user_id: str):
-    user = db.query(ChatUser).filter(ChatUser.userId == user_id).first()
-    if not user:
-        user = ChatUser(userId=user_id)
-        db.add(user)
-        db.commit()
-        db.refresh(user)
-    return get_chatlist(db)
+def get_or_create_single_chatroom(db: Session, user1_id: str, user2_id: str):
+    # Query to find a chat room with exactly two specified members
+    chatroom = (
+        db.query(ChatRoom)
+        .join(chatroom_association, ChatRoom.roomId == chatroom_association.c.roomId)
+        .filter(chatroom_association.c.userId.in_([user1_id, user2_id]))
+        .group_by(ChatRoom.roomId)
+        .having(func.count() == 2)
+        .first()
+    )
+
+    if chatroom:
+        return chatroom  # Existing chat room found
+
+    # Create a new chat room if not found
+    new_chatroom = ChatRoom(roomName="Private Chat")  # 2명 있다는 뜻
+    db.add(new_chatroom)
+    db.flush()  # Flush to get the roomId of newly created chat room
+
+    # Add users to the association table
+    for user_id in [user1_id, user2_id]:
+        association = chatroom_association.insert().values(
+            roomId=new_chatroom.roomId, userId=user_id
+        )
+        db.execute(association)
+
+    db.commit()
+    return new_chatroom
 
 
-def chat(db: Session, chat_req: ChatRequestCreate):
-    try:
-        # 서울 시간대로 현재 시간 설정
-        seoul_tz = pytz.timezone("Asia/Seoul")
-        current_time = datetime.now(seoul_tz)
-        # 채팅 개수 계산 (데이터베이스에 저장된 채팅 메시지의 수)
-        chat_count = db.query(ChatData).count()
-        temp = {
-            "userId": chat_req.userId,
-            "text": chat_req.text,
-            "time": current_time,
-            "index": chat_count,
+def get_or_create_group_chatroom(db: Session, members: List[str], roomName: str):
+    # 1. Check if all users exist
+    for member_id in members:
+        if not db.query(ChatUser).filter(ChatUser.userId == member_id).first():
+            raise HTTPException(status_code=404, detail="User not found")
+
+    # 2. Check if a chat room exists with exactly these members and the same roomName
+    chatroom = (
+        db.query(ChatRoom)
+        .join(chatroom_association, ChatRoom.roomId == chatroom_association.c.roomId)
+        .filter(ChatRoom.roomName == roomName)
+        .having(func.count() == len(members))
+        .group_by(ChatRoom.roomId)
+        .first()
+    )
+
+    if chatroom:
+        # Return existing chat room
+        return chatroom
+
+    # 3. Create a new chat room if not found
+    new_chatroom = ChatRoom(roomName=roomName)
+    db.add(new_chatroom)
+    db.flush()  # Get the roomId of the newly created chat room
+
+    # Add members to the association table
+    for user_id in members:
+        association = chatroom_association.insert().values(
+            roomId=new_chatroom.roomId, userId=user_id
+        )
+        db.execute(association)
+
+    db.commit()
+    return new_chatroom
+
+# 채팅 기록 반환
+def get_chat(db: Session, roomId: str):
+    chat_messages = db.query(ChatData).filter(ChatData.roomId == roomId).all()
+    formatted_messages = []
+    for msg in chat_messages:
+        message_info = {
+            "userId": msg.userId,
+            "time": msg.time.isoformat(),
+            "messageType": msg.message_type,
         }
-        # 채팅 데이터 저장
-        chat_data = ChatData(**temp)
-        print(chat_data.text)
-        db.add(chat_data)
-        db.commit()
-        db.refresh(chat_data)
-        # 저장된 데이터를 ChatRequest 형태로 반환
-        temp["time"] = temp["time"].isoformat()
-        return temp
+        if msg.message_type == "text":
+            message_info["text"] = msg.text
+        elif msg.message_type == "image":
+            message_info["image"] = msg.image
+        elif msg.message_type == "video":
+            message_info["video"] = msg.video
 
-    except Exception as e:
-        print(e)
+        formatted_messages.append(message_info)
 
+    return json.dumps(formatted_messages)
+
+
+def get_roomName(db: Session, roomId: str, userId: str):
+    # Fetch the chat room using roomId
+    chatroom = db.query(ChatRoom).filter(ChatRoom.roomId == roomId).first()
+    if not chatroom:
+        raise HTTPException(status_code=404, detail="Chat Room not found")
+
+    # Check if the roomName is "Private Chat"
+    if chatroom.roomName == "Private Chat":
+        # Find the other participant in the chat room
+        for member in chatroom.members:
+            if member.userId != userId:
+                return member.userId  # Return the other user's ID
+
+    # If not "Private Chat", return the actual room name
+    return chatroom.roomName
+
+
+# 채팅 추가
+def chat(db: Session, chat_req: ChatRequest):
+    seoul_tz = pytz.timezone("Asia/Seoul")
+    current_time = datetime.now(seoul_tz)
+    temp = {
+        "userId": chat_req.userId,
+        "roomId": chat_req.roomId,
+        "time": current_time,
+        "text": chat_req.text if hasattr(chat_req, "text") else None,
+        "image": chat_req.image if hasattr(chat_req, "image") else None,
+        "video": chat_req.video if hasattr(chat_req, "video") else None,
+    }
+    chat_data = ChatData(**temp)
+    print(temp)
+    db.add(chat_data)
+    db.commit()
+    db.refresh(chat_data)
+    temp["time"] = temp["time"].isoformat()
+    temp["messageType"] = chat_data.message_type
+    return temp

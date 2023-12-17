@@ -10,17 +10,16 @@
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     <script src="../static/friend_function.js" type="text/javascript"></script>
     <script src="https://kit.fontawesome.com/45ab8ee623.js" crossorigin="anonymous"></script>
+    <div id="hiddenFriends" data-friends="{{ friends }}" style="display: none;">{{ friends }}</div>
     <div class="sidebar">
-        <a href="friend.html" class="sidebar_button" >
+        <a href="#" class="sidebar_button" id="friend-list">
             <!-- Insert friend logo here (use an img tag or icon library) -->
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6">
                 <path
                     d="M4.5 6.375a4.125 4.125 0 118.25 0 4.125 4.125 0 01-8.25 0zM14.25 8.625a3.375 3.375 0 116.75 0 3.375 3.375 0 01-6.75 0zM1.5 19.125a7.125 7.125 0 0114.25 0v.003l-.001.119a.75.75 0 01-.363.63 13.067 13.067 0 01-6.761 1.873c-2.472 0-4.786-.684-6.76-1.873a.75.75 0 01-.364-.63l-.001-.122zM17.25 19.128l-.001.144a2.25 2.25 0 01-.233.96 10.088 10.088 0 005.06-1.01.75.75 0 00.42-.643 4.875 4.875 0 00-6.957-4.611 8.586 8.586 0 011.71 5.157v.003z" />
             </svg>
-
-
         </a>
-        <a href="chat-list.html" class="sidebar_button" >
+        <a href="#" class="sidebar_button" id="chat-list">
             <!-- Insert chatting logo here -->
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6">
                 <path
@@ -38,12 +37,14 @@
         </a>
         <!-- Modal Structure -->
         <div id="addFriendModal" class="sidebar_modal">
-            <div class="sidebar_modal_modal-content">
+
+            <form action="" class="sidebar_modal_modal-content">
                 <span class="sidebar_modal_modal-content_close">&times;</span>
                 <h2>Add Friend</h2>
                 <input type="text" class="sidebar_modal_modal-content_friend-name" placeholder="Enter friend's name">
-                <button class="sidebar_modal_modal-content_submit">Add</button>
-            </div>
+                <button type="button" class="sidebar_modal_modal-content_submit">Add</button>
+            </form>
+            
         </div>
     </div>
     <div class="main">
@@ -57,67 +58,11 @@
                         clip-rule="evenodd" />
                 </svg>
 
-                <div class="profile-user_user-name">정성훈</div>
+                <div class="profile-user_user-name" id="userId" data-user-id="{{ userId }}">{{ userId }}</div>
             </div>
         </div>
         <div class="main_friend-profile">
             <!-- 친구 리스트 추가 -->
-            <div class="profile-user">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="profile-user_user-image">
-                    <path
-                        d="M10 8a3 3 0 100-6 3 3 0 000 6zM3.465 14.493a1.23 1.23 0 00.41 1.412A9.957 9.957 0 0010 18c2.31 0 4.438-.784 6.131-2.1.43-.333.604-.903.408-1.41a7.002 7.002 0 00-13.074.003z" />
-                </svg>
-
-                <div class="profile-user_user-name">정성훈</div>
-            </div>
-            <div class="profile-user">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="profile-user_user-image">
-                    <path
-                        d="M10 8a3 3 0 100-6 3 3 0 000 6zM3.465 14.493a1.23 1.23 0 00.41 1.412A9.957 9.957 0 0010 18c2.31 0 4.438-.784 6.131-2.1.43-.333.604-.903.408-1.41a7.002 7.002 0 00-13.074.003z" />
-                </svg>
-            
-                <div class="profile-user_user-name">정성훈</div>
-            </div>
-            <div class="profile-user">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="profile-user_user-image">
-                    <path
-                        d="M10 8a3 3 0 100-6 3 3 0 000 6zM3.465 14.493a1.23 1.23 0 00.41 1.412A9.957 9.957 0 0010 18c2.31 0 4.438-.784 6.131-2.1.43-.333.604-.903.408-1.41a7.002 7.002 0 00-13.074.003z" />
-                </svg>
-            
-                <div class="profile-user_user-name">정성훈</div>
-            </div>
-            <div class="profile-user">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="profile-user_user-image">
-                    <path
-                        d="M10 8a3 3 0 100-6 3 3 0 000 6zM3.465 14.493a1.23 1.23 0 00.41 1.412A9.957 9.957 0 0010 18c2.31 0 4.438-.784 6.131-2.1.43-.333.604-.903.408-1.41a7.002 7.002 0 00-13.074.003z" />
-                </svg>
-            
-                <div class="profile-user_user-name">정성훈</div>
-            </div>
-            <div class="profile-user">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="profile-user_user-image">
-                    <path
-                        d="M10 8a3 3 0 100-6 3 3 0 000 6zM3.465 14.493a1.23 1.23 0 00.41 1.412A9.957 9.957 0 0010 18c2.31 0 4.438-.784 6.131-2.1.43-.333.604-.903.408-1.41a7.002 7.002 0 00-13.074.003z" />
-                </svg>
-            
-                <div class="profile-user_user-name">정성훈</div>
-            </div>
-            <div class="profile-user">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="profile-user_user-image">
-                    <path
-                        d="M10 8a3 3 0 100-6 3 3 0 000 6zM3.465 14.493a1.23 1.23 0 00.41 1.412A9.957 9.957 0 0010 18c2.31 0 4.438-.784 6.131-2.1.43-.333.604-.903.408-1.41a7.002 7.002 0 00-13.074.003z" />
-                </svg>
-            
-                <div class="profile-user_user-name">정성훈</div>
-            </div>
-            <div class="profile-user">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="profile-user_user-image">
-                    <path
-                        d="M10 8a3 3 0 100-6 3 3 0 000 6zM3.465 14.493a1.23 1.23 0 00.41 1.412A9.957 9.957 0 0010 18c2.31 0 4.438-.784 6.131-2.1.43-.333.604-.903.408-1.41a7.002 7.002 0 00-13.074.003z" />
-                </svg>
-            
-                <div class="profile-user_user-name">정성훈</div>
-            </div>
         </div>
     </div>
 </body>

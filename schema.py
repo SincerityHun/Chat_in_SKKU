@@ -3,26 +3,34 @@ from typing import Optional
 from datetime import datetime
 
 
-class RequestBase(BaseModel):
+# Pydantic models for request body
+class UserCreate(BaseModel):
     userId: str
-    text: str
+    userPassword: str
 
 
-# 받았을 떄
-class ChatRequestCreate(RequestBase):
-    pass
+class UserLogin(BaseModel):
+    userId: str
+    userPassword: str
 
 
-# 보낼 때
+class FriendRequest(BaseModel):
+    sender_userId: str
+    receiver_userId: str
+
+
 class ChatRequest(BaseModel):
-    index: Optional[int]
     userId: str
-    time: Optional[datetime]
+    roomId: int
+
+
+class TextChatRequest(ChatRequest):
     text: str
 
-    class Config:
-        orm_mode = True
+
+class ImageChatRequest(ChatRequest):
+    image: str
 
 
-class LoginRequest(BaseModel):
-    userId: str
+class VideoChatRequest(ChatRequest):
+    video: str

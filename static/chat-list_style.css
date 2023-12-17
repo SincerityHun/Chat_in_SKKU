@@ -117,6 +117,20 @@ body {
     /* A subtle separator between friends */
     cursor: pointer;
 }
+#roomName{
+    width:100%;
+    font-size:large;
+    font-weight: bold;
+    border-radius: 10px;
+    border:3px solid black;
+    margin-top:12px;
+    padding:0px 5px;
+    overflow: hidden;
+    display:flex;
+    justify-content: center;
+    align-items: center;
+
+}
 /* Highlight selected friend */
 .friend-item.selected {
     background-color: #e7e7e7;
@@ -173,6 +187,7 @@ body {
     flex-shrink: 0;
     box-shadow: -2px 0px 0px 0px rgba(0, 0, 0, 0.1);
     padding: 8px;
+    cursor: pointer;
 
     background: linear-gradient(to right, transparent, rgba(0, 0, 0, 0.2), transparent);
         background-repeat: no-repeat;
