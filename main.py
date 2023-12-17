@@ -1,4 +1,12 @@
-from fastapi import FastAPI, WebSocket, Request, Depends, UploadFile, File
+from fastapi import (
+    FastAPI,
+    WebSocket,
+    Request,
+    Depends,
+    UploadFile,
+    File,
+    HTTPException,
+)
 from fastapi.responses import JSONResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.logger import logger
@@ -31,6 +39,7 @@ from fastapi.staticfiles import StaticFiles
 import json
 import os
 import aiofiles
+import base64
 
 
 # 모델이랑 기본 베이스 바인딩
@@ -42,8 +51,6 @@ app = FastAPI()
 templates = Jinja2Templates(directory="templates")
 # Mount the static directory
 app.mount("/static", StaticFiles(directory="static"), name="static")
-app.mount("/images", StaticFiles(directory="images"), name="images")
-app.mount("/videos", StaticFiles(directory="videos"), name="videos ")
 
 
 # 웹소켓 연결 관리
@@ -63,7 +70,7 @@ class ConnectionManager:
     # 모든 활성 연결에 Broadcast
     async def broadcast(self, message: str):
         for connection in self.active_conections:
-            await connection.send_text(message)  # web socket send_text
+            await connection.send_text(message)
 
 
 manager = ConnectionManager()
@@ -92,6 +99,7 @@ async def websocket_endpoint(websocket: WebSocket, db: Session = Depends(get_db)
             )  # {userId:str, roomId:int, text:str or image or video}
             # 받은 데이터를 데이터모델 객체화
             chat_req_data = json.loads(data)
+            print(chat_req_data)
             # Determine message type and parse to appropriate model
             if "text" in chat_req_data:
                 chat_req = TextChatRequest(**chat_req_data)
@@ -102,11 +110,14 @@ async def websocket_endpoint(websocket: WebSocket, db: Session = Depends(get_db)
             else:
                 # Handle unknown message type
                 continue
+            # print("good")
             # 데이터모델 객체를 데이터베이스에 저장
             # Store chat message in database
             chat_response = json.dumps(chat(db, chat_req))
+            # print("nogood")
             # 저장된 채팅 데이터를 클라이언트에게 broadcast
             await manager.broadcast(chat_response)
+
     except Exception as e:
         print(f"WEBSOCKET ERROR: {e}")
     finally:
@@ -174,12 +185,12 @@ async def add_friend_endpoint(
 
         # Prepare messages for both users
         sender_message = {
-            "type": "friend_added",
+            "messageType": "friend_added",
             "userId": friend_request.sender_userId,
             "friends": sender_friends,
         }
         receiver_message = {
-            "type": "friend_added",
+            "messageType": "friend_added",
             "userId": friend_request.receiver_userId,
             "friends": receiver_friends,
         }
@@ -197,7 +208,7 @@ async def get_or_create_chatroom_endpoint(
 ):
     data = await request.json()
     chatroom = get_or_create_single_chatroom(db, data["user1_id"], data["user2_id"])
-    print(chatroom)
+    # print(chatroom)
     return {"chatroomId": chatroom.roomId}
 
 
@@ -206,7 +217,7 @@ async def get_or_create_multiple_chatroom(
     request: Request, db: Session = Depends(get_db)
 ):
     data = await request.json()
-    print("data:", data)
+    # print("data:", data)
     chatroom = get_or_create_group_chatroom(db, data["members"], data["roomName"])
     print(chatroom)
     return {"roomId": chatroom.roomId}
@@ -218,7 +229,7 @@ async def get_chat_room(
 ):
     roomName = get_roomName(db, roomId, userId)
     result = get_chat(db, roomId)
-    print(result)
+    # print(result)
     # roomId의 채팅내역 반환
     return templates.TemplateResponse(
         "chat.html",
@@ -245,30 +256,26 @@ async def get_chat_list(request: Request, userId: str, db: Session = Depends(get
 
 
 # Upload Image and Video
-async def save_file(file: UploadFile, file_path: str):
-    async with aiofiles.open(file_path, "wb") as out_files:
-        while content := await file.read(1024):
-            await out_files.write(content)
+async def save_file_base64(file: UploadFile) -> str:
+    try:
+        file_contents = await file.read()
+        return base64.b64encode(file_contents).decode("utf-8")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.post("/upload_image")
 async def upload_image(file: UploadFile = File(...)):
-    file_name = f"{file.filename}"
-    file_location = f"images/{file_name}"
-
-    await save_file(file, file_location)
-
-    return {"url": file_location}
+    base64_data = await save_file_base64(file)
+    # You can save base64_data to the database here
+    return {"base64": base64_data}
 
 
 @app.post("/upload_video")
 async def upload_video(file: UploadFile = File(...)):
-    file_name = f"{file.filename}"
-    file_location = f"videos/{file_name}"
-
-    await save_file(file, file_location)
-
-    return {"url": file_location}
+    base64_data = await save_file_base64(file)
+    # You can save base64_data to the database here
+    return {"base64": base64_data}
 
 
 def run():

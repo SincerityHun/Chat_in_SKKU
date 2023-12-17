@@ -13,6 +13,7 @@ from datetime import datetime
 from fastapi import HTTPException, status
 import json
 from typing import Optional, List
+import base64
 
 
 # Function to register a new user
@@ -75,12 +76,17 @@ def get_rooms_list(db: Session, user_id: str):
             .order_by(ChatData.time.desc())
             .first()
         )
-
+        temp_msg = ""
+        if latest_message is not None:
+            if latest_message.text:
+                temp_msg = latest_message.text
+            else:
+                temp_msg = "Media Data"
         # Format the room data
         room_data = {
             "roomId": room.roomId,
             "roomName": get_roomName(db, room.roomId, user_id),
-            "latestMessage": latest_message.text if latest_message.text else "Media Data",
+            "latestMessage": temp_msg,
         }
         chat_list.append(room_data)
     return chat_list
@@ -173,6 +179,7 @@ def get_or_create_group_chatroom(db: Session, members: List[str], roomName: str)
     db.commit()
     return new_chatroom
 
+
 # 채팅 기록 반환
 def get_chat(db: Session, roomId: str):
     chat_messages = db.query(ChatData).filter(ChatData.roomId == roomId).all()
@@ -186,9 +193,14 @@ def get_chat(db: Session, roomId: str):
         if msg.message_type == "text":
             message_info["text"] = msg.text
         elif msg.message_type == "image":
-            message_info["image"] = msg.image
+            # 인코딩된 Base64 문자열로 변환
+            message_info["image"] = (
+                base64.b64encode(msg.image).decode() if msg.image else None
+            )
         elif msg.message_type == "video":
-            message_info["video"] = msg.video
+            message_info["video"] = (
+                base64.b64encode(msg.video).decode() if msg.video else None
+            )
 
         formatted_messages.append(message_info)
 
@@ -221,8 +233,12 @@ def chat(db: Session, chat_req: ChatRequest):
         "roomId": chat_req.roomId,
         "time": current_time,
         "text": chat_req.text if hasattr(chat_req, "text") else None,
-        "image": chat_req.image if hasattr(chat_req, "image") else None,
-        "video": chat_req.video if hasattr(chat_req, "video") else None,
+        "image": base64.b64decode(chat_req.image)
+        if hasattr(chat_req, "image")
+        else None,  # 디코딩된 상태로 저장완료
+        "video": base64.b64decode(chat_req.video)
+        if hasattr(chat_req, "video")
+        else None,  # 디코딩된 상태로 저장완료
     }
     chat_data = ChatData(**temp)
     print(temp)
@@ -231,4 +247,9 @@ def chat(db: Session, chat_req: ChatRequest):
     db.refresh(chat_data)
     temp["time"] = temp["time"].isoformat()
     temp["messageType"] = chat_data.message_type
+    # # Base64 데이터가 있는 경우, JSON 직렬화 가능한 형태로 변환
+    if temp["image"]:
+        temp["image"] = chat_req.image
+    if temp["video"]:
+        temp["video"] = chat_req.video
     return temp

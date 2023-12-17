@@ -126,9 +126,7 @@ body {
     margin-top:12px;
     padding:0px 5px;
     overflow: hidden;
-    display:flex;
-    justify-content: center;
-    align-items: center;
+    text-align: center;
 
 }
 /* Highlight selected friend */

@@ -14,10 +14,10 @@ function make_send(object, messageData) {
             content = `<div class="chat-text">${messageData.text}</div>`;
             break;
         case "image":
-            content = `<img class="chat-text chat-media" src="${messageData.image}" alt="Image" onclick="openModal(this.src)">`;
+            content = `<img class="chat-text chat-media" src="data:image/jpeg;base64,${messageData.image}" alt="Image" onclick="openModal(this.src)">`;
             break;
         case "video":
-            content = `<video class="chat-text chat-media" controls src="${messageData.video}""></video>`;
+            content = `<video class="chat-text chat-media" controls src="data:video/mp4;base64,${messageData.video}"></video>`;
             break;
         default:
             content = `<div class="chat-text">Unsupported message type</div>`;
@@ -40,10 +40,10 @@ function make_receive(object,messageData) {
             content = `<div class="chat-text receiver">${messageData.text}</div>`;
             break;
         case "image":
-            content = `<img class="chat-text chat-media receiver" src="${messageData.image}" alt="Image" onclick="openModal(this.src)">`;
+            content = `<img class="chat-text chat-media receiver" src="data:image/jpeg;base64,${messageData.image}" alt="Image" onclick="openModal(this.src)">`;
             break;
         case "video":
-            content = `<video class="chat-text chat-media receiver" controls src="${messageData.video}" "></video>`;
+            content = `<video class="chat-text chat-media receiver" controls src="data:video/mp4;base64,${messageData.video}" "></video>`;
             break;
         default:
             content = `<div class="chat-text receiver">Unsupported message type</div>`;
@@ -123,12 +123,13 @@ $(document).ready(function () {
             let data = JSON.parse(event.data);
             let chatArea = $('.chat-area');
             console.log(data);
-            if (data.userId == userId && data.roomId == roomId) {
+            if (data.roomId == roomId) {
+                if (data.userId == userId ) {
                 make_send(chatArea, data);
-            } else {
+                }else {
                 make_receive(chatArea,data);
-            }
-
+                }
+            };
             $('.chat-area').scrollTop($('.chat-area')[0].scrollHeight);
             };
             ws.onerror = function(error) {
@@ -215,47 +216,43 @@ $(document).ready(function () {
         window.location.href = "/chat-list?userId=" + userId;
     });
 
-    //4. 이미지 보내기
-    // Function to upload a file
-    async function uploadFile(file, url) {
-        const formData = new FormData();
-        formData.append("file", file);
-
-        const response = await fetch(url, {
-            method: "POST",
-            body: formData
+    //4. 클라이언트에서 Base64로 인코딩해서 서버로 보내기
+    // Function to convert a file to Base64
+    function convertToBase64(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                resolve(e.target.result.split(',')[1]); // Remove the data URL part
+            };
+            reader.onerror = reject;
+            reader.readAsDataURL(file);
         });
-        return response.json();
     }
 
-    // Function to send a chat message with the file URL
-    function sendChatMessage(url, type) {
+    // Function to send a chat message with Base64 data
+    function sendChatMessage(base64Data, type) {
         const messageData = {
             userId: userId,
             roomId: roomId,
-            messageType:"type",
-            [type]: url
+            messageType: type,
+            [type]: base64Data
         };
         ws.send(JSON.stringify(messageData));
     }
-    // Event listeners for file inputs
+    // Event listener for image input
     document.getElementById('imageInput').addEventListener('change', async function() {
         if (this.files.length > 0) {
             const file = this.files[0];
-            const response = await uploadFile(file, '/upload_image');
-            if (response.url) {
-                sendChatMessage(response.url, 'image');
-            }
+            const base64Data = await convertToBase64(file);
+            sendChatMessage(base64Data, 'image');
         }
     });
-
+    // Event listener for video input
     document.getElementById('videoInput').addEventListener('change', async function() {
         if (this.files.length > 0) {
             const file = this.files[0];
-            const response = await uploadFile(file, '/upload_video');
-            if (response.url) {
-                sendChatMessage(response.url, 'video');
-            }
+            const base64Data = await convertToBase64(file);
+            sendChatMessage(base64Data, 'video');
         }
     });
 

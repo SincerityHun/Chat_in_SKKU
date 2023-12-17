@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, Table
+from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, Table, LargeBinary
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 from database import Base
@@ -55,8 +55,8 @@ class ChatData(Base):
     roomId = Column(Integer, ForeignKey("chatroom.roomId"))  # Room ID
     time = Column(DateTime(timezone=True), default=func.now())  # Time with timezone
     text = Column(String, nullable=True)  # Text Data
-    image = Column(String, nullable=True)  # URL or path to image file
-    video = Column(String, nullable=True)  # URL or path to video file
+    image = Column(LargeBinary, nullable=True)  # URL or path to image file
+    video = Column(LargeBinary, nullable=True)  # URL or path to video file
 
     # Use a property or hybrid_property to determine the message type
     @property

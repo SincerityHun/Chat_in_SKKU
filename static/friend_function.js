@@ -90,7 +90,7 @@ $(document).ready(function () {
 
     socket.onmessage = function(event) {
         const data = JSON.parse(event.data);
-        if (data.type === "friend_added" & data.userId === userId) {
+        if (data.messageType === "friend_added" & data.userId === userId) {
             console.log(data.message);
             updateFriendList(data.friends);
         }

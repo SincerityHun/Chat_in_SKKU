@@ -1,6 +1,7 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, validator
 from typing import Optional
 from datetime import datetime
+import base64
 
 
 # Pydantic models for request body
@@ -29,8 +30,26 @@ class TextChatRequest(ChatRequest):
 
 
 class ImageChatRequest(ChatRequest):
-    image: str
+    image: str  # Base64
+
+    @validator("image")
+    def validate_image(cls, v):
+        try:
+            # Decode to check if it's valid Base64, but store as a string
+            base64.b64decode(v)
+        except ValueError:
+            raise ValueError("Invalid image format")
+        return v
 
 
 class VideoChatRequest(ChatRequest):
-    video: str
+    video: str  # Base64
+
+    @validator("video")
+    def validate_video(cls, v):
+        try:
+            # Decode to check if it's valid Base64, but store as a string
+            base64.b64decode(v)
+        except ValueError:
+            raise ValueError("Invalid video format")
+        return v
